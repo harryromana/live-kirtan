@@ -4,19 +4,31 @@ const https = require('https');
 const app = express();
 
 app.get('/kirtan', (req, res) => {
-  const url = 'https://live.sgpc.net:8442/';
-
-  https.get(url, {
+  const options = {
+    hostname: 'live.sgpc.net',
+    port: 8442,
+    path: '/',
+    method: 'GET',
     headers: {
-      'User-Agent': 'Mozilla/5.0',
-      'Icy-MetaData': '1'
+      'User-Agent': 'VLC/3.0.0',
+      'Icy-MetaData': '1',
+      'Connection': 'keep-alive'
     }
-  }, (stream) => {
-    res.setHeader('Content-Type', 'audio/mpeg');
-    stream.pipe(res);
-  }).on('error', (err) => {
+  };
+
+  const request = https.request(options, (response) => {
+    res.writeHead(200, {
+      'Content-Type': 'audio/mpeg',
+      'Transfer-Encoding': 'chunked'
+    });
+    response.pipe(res);
+  });
+
+  request.on('error', (e) => {
     res.status(500).send('Stream Error');
   });
+
+  request.end();
 });
 
 const PORT = process.env.PORT || 3000;
